@@ -1,0 +1,75 @@
+version: '3.9'
+
+services:
+  # Redis for message broker
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  # MySQL for the user service
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: usersdb
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  # ======================
+  # User Service
+  # ======================
+  user-service:
+    build: ./user-service
+    container_name: user-service
+    depends_on:
+      - mysql
+      - redis
+    environment:
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USERNAME=root
+      - DB_PASSWORD=root
+      - DB_NAME=usersdb
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    ports:
+      - "3001:3000" # internal port 3000, mapped to 3001 outside
+
+  # ======================
+  # Auth Service
+  # ======================
+  auth-service:
+    build: ./auth-service
+    container_name: auth-service
+    depends_on:
+      - redis
+      - user-service
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=supersecret
+    ports:
+      - "3002:3000"
+
+  # ======================
+  # API Gateway
+  # ======================
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    depends_on:
+      - auth-service
+      - user-service
+      - redis
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    ports:
+      - "3000:3000" # public entry point
+volumes:
+  mysql_data:

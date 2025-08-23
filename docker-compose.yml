@@ -32,8 +32,8 @@ services:
     environment:
       - DB_HOST=mysql
       - DB_PORT=3306
-      - DB_USERNAME=root
-      - DB_PASSWORD=root
+      - DB_USERNAME=eduvibe
+      - DB_PASSWORD=eduvibe-lms
       - DB_NAME=usersdb
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -70,6 +70,6 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     ports:
-      - "3000:3000" # public entry point
+      - "6000:6000" # public entry point
 volumes:
   mysql_data:

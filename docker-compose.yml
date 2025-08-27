@@ -70,6 +70,6 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     ports:
-      - "6000:6000" # public entry point
+      - "3000:3000" # public entry point
 volumes:
   mysql_data:

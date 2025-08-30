@@ -9,4 +9,4 @@
 	url = https://github.com/lusungu-skillset/auth-service.git
 [submodule "recordings-service"]
 	path = recordings-service
-	url = https://github.com/https://github.com/lusungu-skillset/recordings-service.git
+	url = https://github.com/lusungu-skillset/recordings-service.git

@@ -105,9 +105,9 @@ services:
       - PORT=7003
       - MYSQL_HOST=mysql
       - MYSQL_PORT=3306
-      - MYSQL_USER=${MYSQL_USER:-root}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
-      - MYSQL_DB=${MYSQL_DB:-eduvibe}
+      - MYSQL_USER=eduvibe
+      - MYSQL_PASSWORD=eduvibe-rec
+      - MYSQL_DB=edudbs
       - STORAGE_DIR=/app/storage/recordings
     volumes:
       - recordings_storage:/app/storage/recordings

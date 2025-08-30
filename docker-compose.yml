@@ -10,19 +10,20 @@ services:
     networks:
       - app-network
 
-  # MySQL for the user service
+  # MySQL for all services (user, auth, and recordings)
   mysql:
     image: mysql:8.0
     container_name: mysql
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: usersdb
+      MYSQL_DATABASE: usersdb  # Default database for user/auth services
       MYSQL_USER: eduvibe
       MYSQL_PASSWORD: eduvibe-lms
     ports:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # Script to create additional databases
     networks:
       - app-network
 
@@ -74,28 +75,8 @@ services:
       - app-network
 
   # ======================
-  # API Gateway
+  # Recordings Service
   # ======================
-  api-gateway:
-    build: ./api-gateway
-    container_name: api-gateway
-    depends_on:
-      - auth-service
-      - user-service
-      - redis
-    environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - AUTH_SERVICE_URL=http://auth-service:3000
-      - USER_SERVICE_URL=http://user-service:3000
-      - NODE_ENV=development
-      - CORS_ORIGINS=http://localhost:5173,http://localhost:3000,http://192.168.6.128:5173
-      - HOST=0.0.0.0
-    ports:
-      - "3000:3000"
-    networks:
-      - app-network
-
   recordings-service:
     build: ./recordings-service
     container_name: recordings-service
@@ -104,8 +85,8 @@ services:
       - MYSQL_HOST=mysql
       - MYSQL_PORT=3306
       - MYSQL_USER=eduvibe
-      - MYSQL_PASSWORD=eduvibe-rec
-      - MYSQL_DB=edudbs
+      - MYSQL_PASSWORD=eduvibe-lms  # Same password as other services
+      - MYSQL_DB=recordingsdb       # Different database name
       - STORAGE_DIR=/app/storage/recordings
     volumes:
       - recordings_storage:/app/storage/recordings
@@ -114,6 +95,31 @@ services:
     ports:
       - "7003:7003"
     restart: unless-stopped
+    networks:
+      - app-network
+
+  # ======================
+  # API Gateway
+  # ======================
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    depends_on:
+      - auth-service
+      - user-service
+      - recordings-service  # Add recordings-service dependency
+      - redis
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - AUTH_SERVICE_URL=http://auth-service:3000
+      - USER_SERVICE_URL=http://user-service:3000
+      - RECORDINGS_SERVICE_URL=http://recordings-service:7003  # Add recordings service URL
+      - NODE_ENV=development
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:3000,http://192.168.6.128:5173
+      - HOST=0.0.0.0
+    ports:
+      - "3000:3000"
     networks:
       - app-network
 

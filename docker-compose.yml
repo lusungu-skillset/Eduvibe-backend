@@ -96,8 +96,32 @@ services:
     networks:
       - app-network
 
+  recordings-service:
+    build: ./recordings-service
+    container_name: recordings-service
+    env_file:
+      - ./recordings-service/.env
+    environment:
+      - PORT=7003
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_USER=${MYSQL_USER:-root}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DB=${MYSQL_DB:-eduvibe}
+      - STORAGE_DIR=/app/storage/recordings
+    volumes:
+      - recordings_storage:/app/storage/recordings
+    depends_on:
+      - mysql
+    ports:
+      - "7003:7003"
+    restart: unless-stopped
+    networks:
+      - app-network
+
 volumes:
   mysql_data:
+  recordings_storage:
 
 networks:
   app-network:

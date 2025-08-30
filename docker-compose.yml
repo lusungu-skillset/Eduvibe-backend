@@ -99,8 +99,6 @@ services:
   recordings-service:
     build: ./recordings-service
     container_name: recordings-service
-    env_file:
-      - ./recordings-service/.env
     environment:
       - PORT=7003
       - MYSQL_HOST=mysql

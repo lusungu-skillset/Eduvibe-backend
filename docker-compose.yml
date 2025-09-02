@@ -28,6 +28,30 @@ services:
       - app-network
 
   # ======================
+  # Recordings Service (UPDATED - added depends_on)
+  # ======================
+  recordings-service:
+    build: ./recordings-service
+    container_name: recordings-service
+    environment:
+      - PORT=7003
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_USER=eduvibe
+      - MYSQL_PASSWORD=eduvibe-lms  # Same password as other services
+      - MYSQL_DB=recordingsdb       # Different database name
+      - STORAGE_DIR=/app/storage/recordings
+    volumes:
+      - recordings_storage:/app/storage/recordings
+    depends_on:
+      - mysql  # ✅ ADDED THIS LINE
+    ports:
+      - "7003:7003"
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  # ======================
   # User Service
   # ======================
   user-service:
@@ -71,30 +95,6 @@ services:
       - HOST=0.0.0.0
     ports:
       - "3002:3000"
-    networks:
-      - app-network
-
-  # ======================
-  # Recordings Service
-  # ======================
-  recordings-service:
-    build: ./recordings-service
-    container_name: recordings-service
-    environment:
-      - PORT=7003
-      - MYSQL_HOST=mysql
-      - MYSQL_PORT=3306
-      - MYSQL_USER=eduvibe
-      - MYSQL_PASSWORD=eduvibe-lms  # Same password as other services
-      - MYSQL_DB=recordingsdb       # Different database name
-      - STORAGE_DIR=/app/storage/recordings
-    volumes:
-      - recordings_storage:/app/storage/recordings
-    depends_on:
-      - mysql
-    ports:
-      - "7003:7003"
-    restart: unless-stopped
     networks:
       - app-network
 

@@ -31,7 +31,7 @@ services:
   # Recordings Service
   # ======================
   recordings-service:
-    build: .
+    build: ./recordings-service 
     container_name: recordings-service
     environment:
       - PORT=7003

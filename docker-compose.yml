@@ -23,28 +23,28 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # Script to create additional databases
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # Script to create recordingsdb + user
     networks:
       - app-network
 
   # ======================
-  # Recordings Service (UPDATED - added depends_on)
+  # Recordings Service
   # ======================
   recordings-service:
-    build: ./recordings-service
+    build: .
     container_name: recordings-service
     environment:
       - PORT=7003
       - MYSQL_HOST=mysql
       - MYSQL_PORT=3306
-      - MYSQL_USER=eduvibe
-      - MYSQL_PASSWORD=eduvibe-lms  # Same password as other services
-      - MYSQL_DB=recordingsdb       # Different database name
+      - MYSQL_USER=recordings_user
+      - MYSQL_PASSWORD=eduvibe-lms
+      - MYSQL_DB=recordingsdb
       - STORAGE_DIR=/app/storage/recordings
     volumes:
       - recordings_storage:/app/storage/recordings
     depends_on:
-      - mysql  # ✅ ADDED THIS LINE
+      - mysql
     ports:
       - "7003:7003"
     restart: unless-stopped
@@ -107,14 +107,14 @@ services:
     depends_on:
       - auth-service
       - user-service
-      - recordings-service  # Add recordings-service dependency
+      - recordings-service
       - redis
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - AUTH_SERVICE_URL=http://auth-service:3000
       - USER_SERVICE_URL=http://user-service:3000
-      - RECORDINGS_SERVICE_URL=http://recordings-service:7003  # Add recordings service URL
+      - RECORDINGS_SERVICE_URL=http://recordings-service:7003
       - NODE_ENV=development
       - CORS_ORIGINS=http://localhost:5173,http://localhost:3000,http://192.168.6.128:5173
       - HOST=0.0.0.0

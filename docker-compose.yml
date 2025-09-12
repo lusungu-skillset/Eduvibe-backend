@@ -1,9 +1,4 @@
-
-
 services:
-  # ======================
-  # Redis for message broker
-  # ======================
   redis:
     image: redis:7-alpine
     container_name: redis
@@ -12,8 +7,6 @@ services:
     networks:
       - app-network
 
-  # ======================
-  # MySQL for all services
   mysql:
     image: mysql:8.0
     container_name: mysql
@@ -35,18 +28,17 @@ services:
       timeout: 5s
       retries: 10
 
-  # ======================
-  # Recordings Service
-  # ======================
   recordings-service:
     build: ./recordings-service
     container_name: recordings-service
     depends_on:
-      - mysql
-      - redis
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
     environment:
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT}
+      - DB_HOST=mysql
+      - DB_PORT=3306
       - DB_USERNAME=${MYSQL_USER}
       - DB_PASSWORD=${MYSQL_PASSWORD}
       - DB_NAME=${DB_NAME_RECORDINGS}
@@ -60,10 +52,6 @@ services:
       - "7003:7003"
     networks:
       - app-network
-
-  # ======================
-  # User Service
-  # ======================
 
   user-service:
     build: ./user-service
@@ -88,17 +76,40 @@ services:
       - "3001:3000"
     networks:
       - app-network
-  # ======================
-  # API Gateway
-  # ======================
+
+  auth-service:   # 👈 must be here, same level as user-service, mysql, etc.
+    build: ./auth-service
+    container_name: auth-service
+    depends_on:
+      redis:
+        condition: service_started
+      user-service:
+        condition: service_started
+    environment:
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - JWT_SECRET=supersecret
+      - USER_SERVICE_URL=http://user-service:3000
+      - NODE_ENV=development
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:3000,http://192.168.6.128:5173,http://api-gateway:3000
+      - HOST=0.0.0.0
+    ports:
+      - "3002:3000"
+    networks:
+      - app-network
+
   api-gateway:
     build: ./api-gateway
     container_name: api-gateway
     depends_on:
-      - auth-service
-      - user-service
-      - recordings-service
-      - redis
+      auth-service:
+        condition: service_started
+      user-service:
+        condition: service_started
+      recordings-service:
+        condition: service_started
+      redis:
+        condition: service_started
     environment:
       - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=${REDIS_PORT}
@@ -113,9 +124,6 @@ services:
     networks:
       - app-network
 
-# ======================
-# Volumes & Networks
-# ======================
 volumes:
   mysql_data:
   recordings_storage:

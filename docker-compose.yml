@@ -8,7 +8,7 @@ services:
     image: redis:7-alpine
     container_name: redis
     ports:
-      - "6379:6379"
+      - "6379:6379" # Optional: remove if external access isn’t needed
     networks:
       - app-network
 
@@ -19,15 +19,21 @@ services:
     image: mysql:8.0
     container_name: mysql
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-    ports:
-      - "3306:3306"
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_USER=eduvibe
+      - MYSQL_PASSWORD=eduvibe-lms
+      - MYSQL_DATABASE=recordingsdb
+    command: --init-file /docker-entrypoint-initdb.d/init.sql
     volumes:
       - mysql_data:/var/lib/mysql
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3306:3306" # Optional: remove if external access isn’t needed
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - app-network
 
@@ -38,8 +44,10 @@ services:
     build: ./recordings-service
     container_name: recordings-service
     depends_on:
-      - mysql
-      - redis
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
     environment:
       - DB_HOST=mysql
       - DB_PORT=3306
@@ -64,16 +72,18 @@ services:
     build: ./user-service
     container_name: user-service
     depends_on:
-      - mysql
-      - redis
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
     environment:
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT}
-      - DB_USERNAME=${MYSQL_USER}
-      - DB_PASSWORD=${MYSQL_PASSWORD}
-      - DB_NAME=${DB_NAME_USERS}
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USERNAME=eduvibe
+      - DB_PASSWORD=eduvibe-lms
+      - DB_NAME_USERS=usersdb
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - NODE_ENV=development
       - CORS_ORIGINS=http://localhost:5173,http://localhost:3000,http://192.168.6.128:5173,http://api-gateway:3000
       - HOST=0.0.0.0
@@ -89,11 +99,13 @@ services:
     build: ./auth-service
     container_name: auth-service
     depends_on:
-      - redis
-      - user-service
+      redis:
+        condition: service_started
+      user-service:
+        condition: service_started
     environment:
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - JWT_SECRET=supersecret
       - USER_SERVICE_URL=http://user-service:3000
       - NODE_ENV=development
@@ -111,13 +123,17 @@ services:
     build: ./api-gateway
     container_name: api-gateway
     depends_on:
-      - auth-service
-      - user-service
-      - recordings-service
-      - redis
+      auth-service:
+        condition: service_started
+      user-service:
+        condition: service_started
+      recordings-service:
+        condition: service_started
+      redis:
+        condition: service_started
     environment:
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - AUTH_SERVICE_URL=http://auth-service:3000
       - USER_SERVICE_URL=http://user-service:3000
       - RECORDINGS_SERVICE_URL=http://recordings-service:7003

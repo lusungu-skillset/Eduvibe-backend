@@ -69,8 +69,10 @@ services:
     build: ./user-service
     container_name: user-service
     depends_on:
-      - mysql
-      - redis
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
     environment:
       - DB_HOST=mysql
       - DB_PORT=3306

@@ -1,4 +1,4 @@
-version: '3.9'
+version: '3.8'
 
 services:
   # ======================
@@ -14,27 +14,26 @@ services:
 
   # ======================
   # MySQL for all services
-  # ======================
-mysql:
-  image: mysql:8.0
-  container_name: mysql
-  environment:
-    MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-    MYSQL_DATABASE: ${MYSQL_DATABASE}
-    MYSQL_USER: ${MYSQL_USER}
-    MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-  ports:
-    - "3306:3306"
-  volumes:
-    - mysql_data:/var/lib/mysql
-    - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-  networks:
-    - app-network
-  healthcheck:
-    test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-    interval: 10s
-    timeout: 5s
-    retries: 10
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   # ======================
   # Recordings Service
@@ -66,27 +65,27 @@ mysql:
   # User Service
   # ======================
 
-user-service:
-  build: ./user-service
-  container_name: user-service
-  depends_on:
-    - mysql
-    - redis
-  environment:
-    - DB_HOST=mysql
-    - DB_PORT=3306
-    - DB_USERNAME=eduvibe
-    - DB_PASSWORD=eduvibe-lms  # ← FIXED VARIABLE NAME
-    - DB_NAME_USERS=usersdb
-    - REDIS_HOST=${REDIS_HOST}
-    - REDIS_PORT=${REDIS_PORT}
-    - NODE_ENV=development
-    - CORS_ORIGINS=http://localhost:5173,http://localhost:3000,http://192.168.6.128:5173,http://api-gateway:3000
-    - HOST=0.0.0.0
-  ports:
-    - "3001:3000"
-  networks:
-    - app-network
+  user-service:
+    build: ./user-service
+    container_name: user-service
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USERNAME=${MYSQL_USER}
+      - DB_PASSWORD=${MYSQL_PASSWORD}
+      - DB_NAME_USERS=${MYSQL_DATABASE}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - NODE_ENV=development
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:3000,http://192.168.6.128:5173,http://api-gateway:3000
+      - HOST=0.0.0.0
+    ports:
+      - "3001:3000"
+    networks:
+      - app-network
 
   # ======================
   # Auth Service

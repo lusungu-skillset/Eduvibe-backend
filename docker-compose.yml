@@ -41,13 +41,13 @@ services:
       - mysql
       - redis
     environment:
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT}
-      - DB_USERNAME=${MYSQL_USER}
-      - DB_PASSWORD=${MYSQL_PASSWORD}
-      - DB_NAME=${DB_NAME_RECORDINGS}
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USERNAME=eduvibe
+      - DB_PASSWORD=eduvibe-lms
+      - DB_NAME_USERS=recordingsdb
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - NODE_ENV=development
       - VIDEO_UPLOAD_PATH=/data/videos
     volumes:

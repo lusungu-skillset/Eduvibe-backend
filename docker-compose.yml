@@ -60,7 +60,9 @@ services:
       - mysql
       - redis
     ports:
-      - "3002:3002"   # Expose Recordings Service
+      - "3002:3002"
+    volumes:
+      - recordings_data:/data/videos   # Expose Recordings Service
     networks:
       - app-network
 
@@ -103,6 +105,7 @@ services:
 # ======================
 volumes:
   mysql_data:
+  recordings_data:
 
 networks:
   app-network:

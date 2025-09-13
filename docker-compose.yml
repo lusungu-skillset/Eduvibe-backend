@@ -89,7 +89,7 @@ services:
     restart: always
     env_file: .env
     ports:
-      - "6000:6000"
+      - "3000:3000"
     depends_on:
       - user-service
       - recordings-service

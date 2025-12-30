@@ -1,9 +1,7 @@
 version: '3.9'
 
 services:
-  # ======================
-  # MySQL Database
-  # ======================
+
   mysql:
     image: mysql:8.0
     container_name: mysql
@@ -20,9 +18,7 @@ services:
     networks:
       - app-network
 
-  # ======================
-  # Redis
-  # ======================
+  
   redis:
     image: redis:7-alpine
     container_name: redis
@@ -32,9 +28,7 @@ services:
     networks:
       - app-network
 
-  # ======================
-  # User Service
-  # ======================
+ 
   user-service:
     build: ./user-service
     container_name: user-service
@@ -44,13 +38,10 @@ services:
       - mysql
       - redis
     ports:
-      - "3001:3001"   # Expose User Service
+      - "3001:3001"   
     networks:
       - app-network
 
-  # ======================
-  # Recordings Service
-  # ======================
   recordings-service:
     build: ./recordings-service
     container_name: recordings-service
@@ -62,13 +53,10 @@ services:
     ports:
       - "3002:3002"
     volumes:
-      - recordings_data:/data/videos   # Expose Recordings Service
+      - recordings_data:/data/videos   
     networks:
       - app-network
 
-  # ======================
-  # Auth Service
-  # ======================
   auth-service:
     build: ./auth-service
     container_name: auth-service
@@ -78,13 +66,11 @@ services:
       - mysql
       - redis
     ports:
-      - "3003:3003"   # Expose Auth Service
+      - "3003:3003"   
     networks:
       - app-network
 
-  # ======================
-  # API Gateway
-  # ======================
+
   api-gateway:
     build: ./api-gateway
     container_name: api-gateway
@@ -100,9 +86,6 @@ services:
     networks:
       - app-network
 
-# ======================
-# Volumes & Networks
-# ======================
 volumes:
   mysql_data:
   recordings_data:
